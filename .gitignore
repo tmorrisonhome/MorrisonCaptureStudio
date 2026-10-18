@@ -4,4 +4,10 @@ ffmpeg.zip
 ffmpeg-unpacked/
 *.wav
 *.mp4
+*.mkv
+*.webm
+*.gif
 *.mp3
+*.flac
+*.m4a
+*.ogg

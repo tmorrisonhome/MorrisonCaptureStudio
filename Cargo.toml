@@ -1,24 +1,36 @@
 [package]
 name = "morrison-capture-studio"
-version = "5.0.0"
+version = "5.1.0"
 edition = "2021"
+description = "Portable audio and screen capture editor for Windows"
 
 [features]
 default = []
+# Embeds vendor/ffmpeg.exe inside the EXE so the program is a single standalone file.
 bundle-ffmpeg = []
+# Developer-only: lets the screen layout be previewed on Linux. Not used for the Windows program.
+preview = []
 
 [dependencies]
-eframe = { version = "0.36.2", default-features = false, features = ["default_fonts", "glow", "x11"] }
-wasapi = "0.22"
-hound = "3.5"
+eframe = { version = "=0.36.2", default-features = false, features = ["default_fonts", "glow"] }
 image = { version = "0.25", default-features = false, features = ["png"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+dirs = "6"
+
+[target.'cfg(windows)'.dependencies]
+wasapi = "=0.22.0"
+hound = "3.5"
+rfd = { version = "0.15", default-features = false }
+
+[target.'cfg(not(windows))'.dependencies]
+eframe = { version = "=0.36.2", default-features = false, features = ["default_fonts", "glow", "x11"] }
 
 [profile.release]
 opt-level = 2
 lto = "thin"
 strip = true
+codegen-units = 4
 
 [build-dependencies]
-winres = "0.1"
+winresource = "0.1"

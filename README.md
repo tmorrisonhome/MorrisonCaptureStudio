@@ -1,24 +1,70 @@
-# Morrison Capture Studio v5 — Windows portable Rust application
+# Morrison Capture Studio v5.1 — standalone Windows recorder and editor
 
-Build: upload these files into the existing GitHub repository root, then commit and push. GitHub Actions **Windows Portable EXE** runs a Windows Rust compile and bundles FFmpeg and FFplay into the EXE. The EXE extracts the media tools beside itself on first use. It needs a writable directory.
+One portable EXE. FFmpeg is built inside it, and all playback happens **inside the program window**. No outside player opens and no black console windows appear.
 
-## Recording
-* WASAPI speaker loopback, microphone, both as separate WAV tracks, or neither.
-* Optional desktop video; full screen or numeric region; cursor on/off; frame rate.
-* On stop, retains separate WAV and MP4 captures and creates a combined MP4 for modes that use audio.
+## How to build the EXE (GitHub — recommended)
 
-## Editing
-* File library, waveform, click/shift-click trim marks.
-* Video frame preview with seek and timed preview playback; FFplay handles sound while images appear in the window.
-* Draggable rectangular crop, speed, volume, mono, reverse, loudness, fades, size changes.
-* Split media into two files, single-source export to MP3/WAV/FLAC/M4A/OGG/MP4/MKV/WebM/GIF.
-* Multitrack audio mixing with per-track delay, gain, mute and export.
-* Multiple video clips in a reorderable timeline, per-clip in/out points and MP4 render at normalized 720p/30 fps. The timeline retains per-clip audio where available and inserts silence for video clips without audio; source videos are preserved.
-* Save/reopen the project as JSON containing clip and track settings.
+1. In your GitHub repository, **delete the old files**, especially the old `src` folder, because several files were replaced or renamed.
+2. Upload **everything in this zip**, keeping the folders. The `.github` folder is hidden on some PCs; make sure `.github/workflows/windows-build.yml` is uploaded too.
+3. Commit. The **Windows Portable EXE** workflow starts automatically on pushes to `main` or `master`. You can also start it from the **Actions** tab with **Run workflow**.
+4. When it shows a green check, open the run and download **MorrisonCaptureStudio-Windows-Portable**. It contains `morrison-capture-studio.exe`.
+5. Copy the EXE anywhere (Desktop, USB stick) and double-click it. Nothing to install.
 
-## Build status
-The source was reviewed here, but cannot be compiled or runtime-tested in this Linux environment because its Windows Rust toolchain is unavailable. GitHub Actions is the authoritative compiler test. Do not treat compilation success as recording/editing runtime validation. Keep the application folder writable for media tool extraction.
+The first build takes about 10–15 minutes. Later builds are faster because of caching.
 
-New in this project package: File/Open dialogs, independent audio track mixing, joined video clips with their audio (silent clips receive silent audio tracks), video color/rotation/flip effects, optional click-highlighted screen captures, noise reduction, bass/treble/compression filters, in-window frame playback accompanied by FFplay audio, undo/redo for edit properties, and an editable save/reopen project.
+## How to build on your own PC (optional)
 
-Recording audio from some applications may be restricted by operating-system DRM. Respect others' privacy and copyrights when recording.
+Install Rust from https://rustup.rs (choose the default options, which include the Microsoft C++ build tools), then double-click `build_windows.bat`. It downloads FFmpeg once and builds `target\release\morrison-capture-studio.exe`.
+
+## Where things are saved
+
+| What | Where |
+|---|---|
+| Recordings and exports | `Videos\Morrison Capture Studio` (change it in **Settings**) |
+| Separate raw tracks (screen-only video, each WAV) | `Videos\Morrison Capture Studio\Raw Tracks` (can be turned off in Settings) |
+| Settings, built-in FFmpeg copy, last recording log | `%LOCALAPPDATA%\MorrisonCaptureStudio` |
+
+On first start the program unpacks its built-in FFmpeg (about 100 MB) into `%LOCALAPPDATA%`. This takes a second or two and only happens once per version.
+
+## What it does
+
+**Record**
+- Speakers only, microphone only, both, or no audio. Each source is recorded to its own WAV track.
+- Desktop/screen: primary monitor, any other monitor, all monitors, or a custom region.
+- Cursor on/off, click highlighting, video quality (native / 1080p / 720p / 480p), and 15–60 FPS.
+- On **STOP & SAVE**, the audio is lined up with the first video frame and combined into one MP4 with sound. This runs in the background with a progress bar.
+
+**Recordings tab**
+- File list with thumbnails, length and size.
+- In-app video and audio preview with play/pause, seek, volume and full screen.
+- Left/right channel waveform.
+- Quick tools: Trim, Volume, Crop, Split and Delete. Delete sends the file to the Recycle Bin.
+- Export panel: choose a format and quality, then press **Export Selected**.
+
+**Audio Editor and Video Editor tabs**
+- Audio: trim, volume, speed, fades, bass/treble, normalize, noise reduction, compressor, mono and reverse.
+- Video: crop by dragging on the picture, rotate, flip, brightness/contrast/saturation, black and white, resize, and remove sound.
+- Undo/Redo (Ctrl+Z / Ctrl+Y).
+
+**Edit / Timeline**
+- Join several video clips, each with its own In/Out points, into one 1280×720 MP4.
+- Multitrack audio mix: slide tracks in time, set each level, mute, and export to WAV, MP3, FLAC or M4A.
+- Save/Open project.
+
+**Media Library, Export and Settings pages**
+- Media Library: search, filter, rename, show in Explorer, delete, and add files.
+- Export page: full export settings, a list of the edits that will be applied, and the FFmpeg log.
+- Settings: output folder, keep raw tracks, custom region, and media engine status.
+
+## Limits to know about
+
+- **Windows 10 or 11 only.**
+- **The preview plays the original file.** Edits such as volume, crop and color are applied when you export.
+- **Long WAV recordings:** a single WAV track is limited to about 3 hours by the WAV format.
+- **Protected content:** some apps block capture of their picture or sound (copy protection), and those parts record as black or silent.
+- **Audio/video sync** is lined up automatically to within a few hundredths of a second. On a very busy PC, check the first recording.
+- **License:** the built-in FFmpeg is GPL-licensed. That's fine for personal use; if you give the EXE to others, include a note that it contains FFmpeg (https://ffmpeg.org).
+
+## For developers
+
+`src/*_stub.rs`, `src/preview_stubs.rs` and the `preview` feature are only used to preview the screen layout on Linux. The Windows build never uses them.

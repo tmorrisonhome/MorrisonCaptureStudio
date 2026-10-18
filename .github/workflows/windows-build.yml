@@ -1,30 +1,38 @@
 name: Windows Portable EXE
+
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, master]
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
-      - name: Download and bundle FFmpeg
+
+      # Re-uses compiled libraries between runs (much faster builds after the first).
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Download FFmpeg (built into the EXE)
         shell: pwsh
         run: |
+          $ProgressPreference = 'SilentlyContinue'
           New-Item -ItemType Directory -Force vendor | Out-Null
           Invoke-WebRequest 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip' -OutFile ffmpeg.zip
-          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-unpacked
-          $bin=Get-ChildItem ffmpeg-unpacked -Filter ffmpeg.exe -Recurse | Select-Object -First 1
-          if (!$bin) { throw 'ffmpeg.exe not found' }
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-unpacked -Force
+          $bin = Get-ChildItem ffmpeg-unpacked -Filter ffmpeg.exe -Recurse | Select-Object -First 1
+          if (!$bin) { throw 'ffmpeg.exe not found in the download' }
           Copy-Item $bin.FullName vendor/ffmpeg.exe
-          $player=Get-ChildItem ffmpeg-unpacked -Filter ffplay.exe -Recurse | Select-Object -First 1
-          if (!$player) { throw "ffplay.exe not found" }
-          Copy-Item $player.FullName vendor/ffplay.exe
-      - name: Compile portable single EXE
-        run: cargo build --release --features bundle-ffmpeg --target x86_64-pc-windows-msvc
+          Get-Item vendor/ffmpeg.exe | Format-List Name, Length
+
+      - name: Compile standalone EXE
+        run: cargo build --release --locked --features bundle-ffmpeg --target x86_64-pc-windows-msvc
+
       - uses: actions/upload-artifact@v4
         with:
           name: MorrisonCaptureStudio-Windows-Portable
