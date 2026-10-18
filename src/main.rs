@@ -108,7 +108,7 @@ impl Studio {
  }
  fn video_timeline_ui(&mut self,ui:&mut egui::Ui){ui.heading("Video Clip Timeline");ui.label("Combine multiple clips in order, with independent start/end points, into an MP4.");if ui.button("+ Add selected video clip").clicked(){self.add_video_clip();}
  let mut move_up=None;let mut move_down=None;let mut remove=None;
- egui::ScrollArea::vertical().max_height(240.).show(ui,|ui|{for (i,c) in self.clips.iter_mut().enumerate(){egui::Frame::group(ui.style()).show(ui,|ui|{ui.horizontal_wrapped(|ui|{ui.strong(format!("Clip {}",i+1));ui.label("In (s)");ui.add(egui::DragValue::new(&mut c.start).range(0.0..=999999.).speed(.1));ui.label("Out (s)");ui.add(egui::DragValue::new(&mut c.end).range(0.0..=999999.).speed(.1));if ui.button("↑").clicked(){move_up=Some(i);}if ui.button("↓").clicked(){move_down=Some(i);}if ui.button("Remove").clicked(){remove=Some(i);}});ui.small(&c.path);});}});
+ egui::ScrollArea::vertical().max_height(240.).show(ui,|ui|{for (i,c) in self.clips.iter_mut().enumerate(){egui::Frame::group(ui.style()).show(ui,|ui|{ui.horizontal_wrapped(|ui|{ui.strong(format!("Clip {}",i+1));ui.label("In (s)");ui.add(egui::DragValue::new(&mut c.start).range(0.0..=999999.).speed(0.1));ui.label("Out (s)");ui.add(egui::DragValue::new(&mut c.end).range(0.0..=999999.).speed(0.1));if ui.button("↑").clicked(){move_up=Some(i);}if ui.button("↓").clicked(){move_down=Some(i);}if ui.button("Remove").clicked(){remove=Some(i);}});ui.small(&c.path);});}});
  if let Some(i)=remove{self.clips.remove(i);}else if let Some(i)=move_up{if i>0{self.clips.swap(i,i-1);}}else if let Some(i)=move_down{if i+1<self.clips.len(){self.clips.swap(i,i+1);}}
  if ui.button("RENDER VIDEO CLIP TIMELINE").clicked(){self.render_video_timeline();}
  }
@@ -283,7 +283,7 @@ impl Studio {
     if response.drag_started()||response.clicked(){self.save_undo();}if response.dragged()||response.clicked(){if let Some(pos)=response.interact_pointer_pos(){let time=((pos.x-rect.left())/rect.width()).clamp(0.,1.)*self.media_duration;if ui.input(|i|i.modifiers.shift){self.trim_end=time.max(self.trim_start);}else{self.trim_start=time.min(if self.trim_end>0.{self.trim_end}else{self.media_duration});}}}
    }
    ui.small("Click waveform to set trim start. Shift-click or Shift-drag to set trim end.");
-   ui.horizontal(|ui|{ui.label("Start (sec)");ui.add(egui::DragValue::new(&mut self.trim_start).range(0.0..=360000.0).speed(.1));ui.label("End (0=full)");ui.add(egui::DragValue::new(&mut self.trim_end).range(0.0..=360000.0).speed(.1));});
+   ui.horizontal(|ui|{ui.label("Start (sec)");ui.add(egui::DragValue::new(&mut self.trim_start).range(0.0..=360000.0).speed(0.1));ui.label("End (0=full)");ui.add(egui::DragValue::new(&mut self.trim_end).range(0.0..=360000.0).speed(0.1));});
  }
  fn preview_view(&mut self,ui:&mut egui::Ui){
    ui.label(egui::RichText::new("Video Preview / Visual Crop").size(16.).strong());
@@ -342,7 +342,14 @@ impl Drop for Studio {fn drop(&mut self){self.stop_playback();if self.recording.
 impl eframe::App for Studio {
  fn ui(&mut self,ui:&mut egui::Ui,_frame:&mut eframe::Frame){
   ui.ctx().set_visuals(egui::Visuals::dark());
-  ui.ctx().style_mut(|style|{style.visuals.override_text_color=Some(egui::Color32::from_rgb(225,240,255));style.visuals.panel_fill=egui::Color32::from_rgb(8,20,32);style.visuals.widgets.inactive.bg_fill=egui::Color32::from_rgb(29,50,69);style.visuals.widgets.inactive.fg_stroke.color=egui::Color32::WHITE;style.visuals.widgets.hovered.bg_fill=egui::Color32::from_rgb(35,94,141);style.spacing.item_spacing=egui::vec2(8.,9.);style.spacing.button_padding=egui::vec2(10.,7.);});
+  ui.style_mut().visuals.override_text_color=Some(egui::Color32::from_rgb(225,240,255));
+  ui.style_mut().visuals.panel_fill=egui::Color32::from_rgb(8,20,32);
+  ui.style_mut().visuals.widgets.inactive.bg_fill=egui::Color32::from_rgb(29,50,69);
+  ui.style_mut().visuals.widgets.inactive.fg_stroke.color=egui::Color32::WHITE;
+  ui.style_mut().visuals.widgets.hovered.bg_fill=egui::Color32::from_rgb(35,94,141);
+  ui.style_mut().spacing.item_spacing=egui::vec2(8.,9.);
+  ui.style_mut().spacing.button_padding=egui::vec2(10.,7.);
+
   egui::Frame::new().fill(egui::Color32::from_rgb(4,28,52)).inner_margin(12.).show(ui,|ui|{ui.horizontal(|ui|{ui.vertical(|ui|{ui.label(egui::RichText::new("MORRISON").size(31.).strong().color(egui::Color32::WHITE));ui.label(egui::RichText::new("CAPTURE STUDIO").size(22.).strong().color(egui::Color32::from_rgb(75,194,250)));});ui.separator();ui.label("Rust Edition\nAudio + Screen Recording\nEditing + Media Export");});});
   ui.add_space(10.);
   egui::ScrollArea::vertical().show(ui,|ui|{
