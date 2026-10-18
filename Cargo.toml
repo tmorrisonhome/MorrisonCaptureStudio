@@ -1,0 +1,23 @@
+[package]
+name = "morrison-capture-studio"
+version = "2.0.0"
+edition = "2021"
+
+[features]
+default = []
+bundle-ffmpeg = []
+
+[dependencies]
+eframe = { version = "0.36.2", default-features = false, features = ["default_fonts", "glow", "x11"] }
+wasapi = "0.22"
+hound = "3.5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+strip = true
+
+[build-dependencies]
+winres = "0.1"

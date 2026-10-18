@@ -1,0 +1,28 @@
+name: Windows Portable EXE
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Download and bundle FFmpeg
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force vendor | Out-Null
+          Invoke-WebRequest 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip' -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-unpacked
+          $bin=Get-ChildItem ffmpeg-unpacked -Filter ffmpeg.exe -Recurse | Select-Object -First 1
+          if (!$bin) { throw 'ffmpeg.exe not found' }
+          Copy-Item $bin.FullName vendor/ffmpeg.exe
+      - name: Compile portable single EXE
+        run: cargo build --release --features bundle-ffmpeg --target x86_64-pc-windows-msvc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MorrisonCaptureStudio-Windows-Portable
+          path: target/x86_64-pc-windows-msvc/release/morrison-capture-studio.exe
