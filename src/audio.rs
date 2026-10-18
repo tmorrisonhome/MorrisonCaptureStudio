@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, sync::{Arc,atomic::{AtomicBool,Ordering}}, thread, time::Duration, path::PathBuf};
+use std::{collections::VecDeque, sync::{Arc,atomic::{AtomicBool,Ordering}}, thread, path::PathBuf};
 use wasapi::{DeviceEnumerator, Direction, WaveFormat, SampleType, StreamMode, initialize_mta};
 
 pub const RATE: u32 = 48000;
@@ -44,7 +44,8 @@ pub fn list_devices(mic: bool) -> Result<Vec<(String,String)>, String> {
     let en = DeviceEnumerator::new().map_err(|e| e.to_string())?;
     let col = en.get_device_collection(if mic { &Direction::Capture } else { &Direction::Render }).map_err(|e| e.to_string())?;
     let mut result = Vec::new();
-    for device in col.into_iter() {
+    for entry in col.into_iter() {
+        let device = entry.map_err(|e| e.to_string())?;
         let name = device.get_friendlyname().unwrap_or_else(|_| "Audio device".into());
         let id = device.get_id().unwrap_or_default();
         result.push((name,id));
