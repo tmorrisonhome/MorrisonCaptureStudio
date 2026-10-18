@@ -20,6 +20,9 @@ jobs:
           $bin=Get-ChildItem ffmpeg-unpacked -Filter ffmpeg.exe -Recurse | Select-Object -First 1
           if (!$bin) { throw 'ffmpeg.exe not found' }
           Copy-Item $bin.FullName vendor/ffmpeg.exe
+          $player=Get-ChildItem ffmpeg-unpacked -Filter ffplay.exe -Recurse | Select-Object -First 1
+          if (!$player) { throw "ffplay.exe not found" }
+          Copy-Item $player.FullName vendor/ffplay.exe
       - name: Compile portable single EXE
         run: cargo build --release --features bundle-ffmpeg --target x86_64-pc-windows-msvc
       - uses: actions/upload-artifact@v4

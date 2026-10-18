@@ -1,0 +1,7 @@
+target/
+vendor/
+ffmpeg.zip
+ffmpeg-unpacked/
+*.wav
+*.mp4
+*.mp3
